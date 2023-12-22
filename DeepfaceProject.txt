@@ -1,0 +1,49 @@
+import os
+import pandas as pd
+from deepface import DeepFace
+
+image_folder = r"C:\Users\Ashha\OneDrive\Desktop\Datathon\deepface\faceimages"
+image_files = [f for f in os.listdir(image_folder) if f.lower().endswith('.png')]
+
+columns = ['Filename', 'Gender', 'Race/Ethnicity', 'Age']
+rows = []
+
+
+for i, image_file in enumerate(image_files):
+    image_path = os.path.join(image_folder, image_file)
+
+    try:
+        result = DeepFace.analyze(image_path, actions=['gender', 'race', 'age'])
+
+        if isinstance(result, list) and len(result) > 0 and isinstance(result[0], dict):
+            gender = result[0].get('dominant_gender', 'unknown')
+            race = result[0].get('dominant_race', 'unknown')
+            age = result[0].get('age', '-1')
+
+            rows.append({
+                'Filename': image_file,
+                'Gender': gender,
+                'Race/Ethnicity' : race,
+                'Age' : age
+            })
+        else:
+            print(f"Error processing {image_file}: {result}")
+            rows.append({
+                'Filename': image_file,
+                'Gender': 'unknown',
+                'Race/Ethnicity': 'unknown',
+                'Age': '-1'
+            })
+    except Exception as e: 
+        print(f"Error processing {image_file}: {e}")
+        rows.append({
+            'Filename': image_file,
+            'Gender': 'unknown',
+            'Race/Ethnicity': 'unknown',
+            'Age': '-1'
+        })
+
+results_df = pd.DataFrame(rows)
+results_df.to_csv('Results.csv', index=False)
+
+print(results_df)
